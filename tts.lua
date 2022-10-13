@@ -144,6 +144,10 @@ function tts.tts(args)
 	local bracket_indent = tts.util.string_multiply(tts.prettify.style.table.indent, args.depth)
 	local full_indent = bracket_indent..tts.prettify.style.table.indent
 
+	if next(args.table) == nil then
+		return bracket_color_inc(args, "{")..bracket_color_dec(args, "}")
+	end
+
 	local outs = bracket_color_inc(args, "{").."\n"
 
 	for k, v in pairs(args.table) do
@@ -198,7 +202,7 @@ function tts.prettify.userdata(ud)
 end
 
 ---@param tb table
-function tts.prettify.table(tb, ...)
+function tts.prettify.table(tb)
 	local mt = getmetatable(tb)
 
 	--- If a table already has a string conversion, we should just
@@ -208,7 +212,9 @@ function tts.prettify.table(tb, ...)
 		return tostring(tb)
 	end
 
-	return tts(tb, ...)
+	return tts {
+		table = tb
+	}
 end
 
 return tts
