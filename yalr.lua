@@ -79,32 +79,34 @@ while true do
 
 	local err
 
-	count = count + 1
-
-	io.write("\x1b[32;1m"..tostring(count).." >>>\x1b[0m ")
+	io.write(("\x1b[32;1m[%s] >>>\x1b[0m "):format(count))
 
 	success, input = pcall(read_line)
 
 	if not success then
 		print(input)
-	elseif input ~= nil then
+	elseif input ~= nil and input ~= "" then
 		if input == "exit" or input == "quit" then
 			print("Bye!")
 			os.exit(0)
 			break
-		end
-
-		success, resoult = pcall(load(input))
-		if success then
-			if resoult ~= nil then
-				print(tts.prettify(resoult))
-			end
+		elseif input == "clear" then
+			os.execute("clear")
+			count = count + 1
 		else
-			success, resoult = pcall(load("return "..input))
+			count = count + 1
+			success, resoult = pcall(load(input))
 			if success then
-				print(tts.prettify(resoult))
-			elseif resoult ~= nil then
-				print(resoult)
+				if resoult ~= nil then
+					print(tts.prettify(resoult))
+				end
+			else
+				success, resoult = pcall(load("return "..input))
+				if success then
+					print(tts.prettify(resoult))
+				elseif resoult ~= nil then
+					print(resoult)
+				end
 			end
 		end
 	end

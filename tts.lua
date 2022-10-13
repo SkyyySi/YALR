@@ -20,7 +20,7 @@ local tts = {
 		style = {
 			string = '\x1b[33m"%s"\x1b[0m',
 			number = "\x1b[33m%s\x1b[0m",
-			func = "\x1b[35;1m%s\x1b[0m",
+			["function"] = "\x1b[35;1m%s\x1b[0m",
 			thread = "\x1b[35;1m%s\x1b[0m", -- coroutine
 			userdata = "\x1b[36;1m%s\x1b[0m",
 			table = {
@@ -77,16 +77,17 @@ end
 ---@param s string
 ---@return string, integer
 function tts.util.string_escape(s)
-	return s:gsub("\\", [[\\]])
-		:gsub("\a", [[\a]])
-		:gsub("\b", [[\b]])
-		:gsub("\f", [[\f]])
-		:gsub("\n", [[\n]])
-		:gsub("\r", [[\r]])
-		:gsub("\t", [[\t]])
-		:gsub("\v", [[\v]])
-		:gsub("\"", [[\"]])
-		:gsub("\'", [[\']])
+	-- "\x1b[1m" "\x1b[0m"
+	return s:gsub("\\", "\x1b[1m\\\\\x1b[22m")
+		:gsub("\a", "\x1b[1m\\a\x1b[22m")
+		:gsub("\b", "\x1b[1m\\b\x1b[22m")
+		:gsub("\f", "\x1b[1m\\f\x1b[22m")
+		:gsub("\n", "\x1b[1m\\n\x1b[22m")
+		:gsub("\r", "\x1b[1m\\r\x1b[22m")
+		:gsub("\t", "\x1b[1m\\t\x1b[22m")
+		:gsub("\v", "\x1b[1m\\v\x1b[22m")
+		:gsub("\"", '\x1b[1m\\"\x1b[22m')
+		:gsub("\'", "\x1b[1m\\'\x1b[22m")
 end
 
 ---@param str string
@@ -187,12 +188,12 @@ function tts.prettify.number(num)
 end
 
 ---@param func function
-function tts.prettify.func(func)
-	return tts.prettify.style.func:format(func)
+tts.prettify["function"] = function(func)
+	return tts.prettify.style["function"]:format(func)
 end
 
 ---@param th thread
-function tts.prettify.userdata(th)
+function tts.prettify.thread(th)
 	return tts.prettify.style.thread:format(th)
 end
 
