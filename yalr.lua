@@ -53,7 +53,7 @@ local function read_line()
 			else
 				line = line..tostring(c)
 			end
-			printf("{'%s' %s}_-_-_", c, c_byte)
+			--printf("{'%s' %s}_-_-_", c, c_byte)
 		end
 	end
 end
