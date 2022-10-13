@@ -47,7 +47,7 @@ local function read_line()
 				-- ^[[D = left
 				printf("\b\b\b    \b\b\b")
 				special = special + 1
-			elseif special < 3 then
+			elseif 0 < special and special < 3 then
 				printf("\b\b\b    \b\b\b")
 				special = special + 1
 			else
