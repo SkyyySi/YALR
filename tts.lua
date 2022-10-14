@@ -213,7 +213,13 @@ function tts.prettify.table(tb)
 		return tostring(tb)
 	end
 
-	return tts({ table = tb })..",\nmetatable: "..tts({ table = mt })
+	local ret = tts { table = tb }
+
+	if mt ~= nil then
+		ret = ret..",\nmetatable: "..tts({ table = mt })
+	end
+
+	return ret
 end
 
 return tts
