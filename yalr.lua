@@ -117,8 +117,6 @@ local function read_line()
 				special = special + 1
 			elseif 1 < special and special < 3 then
 				io.stdout:write("\b\b  \b\b")
-				--io.stdout:write(line_history[hist_index]:sub(#line_history[hist_index], #line_history[hist_index]):lower())
-				--printf("{'%s' %s}", c, c_byte)
 				if c_byte == 65 and 1 <= hist_index - 1 then -- up
 					clear_line(current_line)
 					hist_index = hist_index - 2
@@ -127,6 +125,10 @@ local function read_line()
 					clear_line(current_line)
 					hist_index = hist_index + 2
 					io.stdout:write(prompt_fmt:format(count)..line_history[hist_index])
+				elseif c_byte == 67 then -- right
+					-- print the next character of the line
+				elseif c_byte == 68 then -- left
+					-- \r, print line without the last character
 				end
 				special = special + 1
 			else
@@ -175,13 +177,13 @@ while true do
 			count = count + 1
 		else
 			count = count + 1
-			success, resoult = pcall(load(input))
+			success, resoult = pcall(load("return "..input))
 			if success then
 				if resoult ~= nil then
 					print(tts.prettify(resoult))
 				end
 			else
-				success, resoult = pcall(load("return "..input))
+				success, resoult = pcall(load(input))
 				if success then
 					print(tts.prettify(resoult))
 				elseif resoult ~= nil then
