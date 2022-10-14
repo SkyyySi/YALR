@@ -2,6 +2,8 @@
 
 YALR is a simple REPL for Lua, written in Lua, configured in Lua, breathing Lua.
 
+![YALR screenshot](/assets/screenshot0.png)
+
 YALR is a very early project in its pre-alpha stages. Contributions welcome.
 
 Currently, YALR only supports Linux (and other UNIX-like systems), Windows will
