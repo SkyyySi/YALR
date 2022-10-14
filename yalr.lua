@@ -14,12 +14,75 @@ local function printf(format, ...)
 	io.stdout:write(format:format(...))
 end
 
+local function clear()
+	os.execute("clear")
+end
+
+local prompt_fmt = "\x1b[32;1m[%s] >>>\x1b[0m "
+
+local function clear_line(current_line)
+	local line_length = #current_line
+	io.stdout:write("\r"..tts.util.string_multiply(" ", line_length).."\r")
+end
+
 local line_history = {}
+do
+	local mt = {}
+	mt.__index = mt
+	setmetatable(line_history, mt)
+
+	---@param s string
+	---@return string, integer
+	function mt.string_escape(s)
+		return s:gsub("\\", [[\\]])
+			:gsub("\a", [[\a]])
+			:gsub("\b", [[\b]])
+			:gsub("\f", [[\f]])
+			:gsub("\n", [[\n]])
+			:gsub("\r", [[\r]])
+			:gsub("\t", [[\t]])
+			:gsub("\v", [[\v]])
+			:gsub("\"", [[\"]])
+			:gsub("\'", [[\']])
+	end
+
+	mt.dump_path = os.getenv("HOME").."/.yalr_history.lua"
+
+	function mt:load(path)
+		path = path or mt.dump_path
+		local success, result = pcall(dofile, path)
+
+		if success then
+			for k, v in pairs(result) do
+				self[k] = v
+			end
+		end
+	end
+
+	function mt:dump(path)
+		path = path or mt.dump_path
+		local file, err = io.open(path, "w+")
+
+		if not file or err then
+			print(err)
+			return
+		end
+
+		local str = "return {"
+		for k, v in pairs(self) do
+			str = ('%s"%s",'):format(str, mt.string_escape(v))
+		end
+		str = str.."}"
+
+		file:write(str)
+		file:close()
+	end
+end
 
 local function read_line()
-	local line = ""
 	local special = 0
 	local hist_index = #line_history + 1
+	line_history[hist_index] = line_history[hist_index] or ""
 
 	while true do
 		local c, c_byte
@@ -29,29 +92,45 @@ local function read_line()
 
 		if c:match("[\n]") then
 			os.execute("stty icanon")
-			table.insert(line_history, line)
-			return line
+			table.insert(line_history, line_history[hist_index])
+			line_history:dump()
+			return line_history[hist_index]
+		elseif c_byte == 17 then -- Ctrl+L / clear
+			clear()
+			io.stdout:write(prompt_fmt:format(count)..tostring(line_history[hist_index]))
 		elseif c_byte == 27 then
 			special = 1
 		elseif c_byte == 127 then -- backspace
 			printf("\b\b   \b\b\b")
-			if #line > 0 then
+			if #line_history[hist_index] > 0 then
 				printf("\b \b")
-				line = line:sub(1, #line-1)
+				line_history[hist_index] = line_history[hist_index]:sub(1, #line_history[hist_index]-1)
 			end
 		else
+			local current_line = prompt_fmt:format(count)..tostring(line_history[hist_index])
 			if 0 < special and special < 2 then
 				-- ^[[A = up
 				-- ^[[B = down
 				-- ^[[C = right
 				-- ^[[D = left
-				printf("\b\b\b    \b\b\b")
+				io.stdout:write("\b\b\b    \b\b\b")
 				special = special + 1
-			elseif 0 < special and special < 3 then
-				printf("\b\b\b    \b\b\b")
+			elseif 1 < special and special < 3 then
+				io.stdout:write("\b\b  \b\b")
+				--io.stdout:write(line_history[hist_index]:sub(#line_history[hist_index], #line_history[hist_index]):lower())
+				--printf("{'%s' %s}", c, c_byte)
+				if c_byte == 65 and 1 <= hist_index - 1 then -- up
+					clear_line(current_line)
+					hist_index = hist_index - 2
+					io.stdout:write(prompt_fmt:format(count)..line_history[hist_index])
+				elseif c_byte == 66 and #line_history > hist_index + 1 then -- down
+					clear_line(current_line)
+					hist_index = hist_index + 2
+					io.stdout:write(prompt_fmt:format(count)..line_history[hist_index])
+				end
 				special = special + 1
 			else
-				line = line..tostring(c)
+				line_history[hist_index] = line_history[hist_index]..tostring(c)
 			end
 			--printf("{'%s' %s}_-_-_", c, c_byte)
 		end
@@ -63,6 +142,7 @@ end
 
 --[ [
 print("Welcome to YALR!")
+line_history:load()
 while true do
 	---@type string
 	local input
@@ -79,7 +159,7 @@ while true do
 
 	local err
 
-	io.write(("\x1b[32;1m[%s] >>>\x1b[0m "):format(count))
+	io.write(prompt_fmt:format(count))
 
 	success, input = pcall(read_line)
 
@@ -91,7 +171,7 @@ while true do
 			os.exit(0)
 			break
 		elseif input == "clear" then
-			os.execute("clear")
+			clear()
 			count = count + 1
 		else
 			count = count + 1

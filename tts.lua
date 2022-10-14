@@ -213,9 +213,7 @@ function tts.prettify.table(tb)
 		return tostring(tb)
 	end
 
-	return tts {
-		table = tb
-	}
+	return tts({ table = tb })..",\nmetatable: "..tts({ table = mt })
 end
 
 return tts
